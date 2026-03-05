@@ -280,8 +280,8 @@ impl Rpmsgfs {
                 let statfs_data = msgs::Statfs {
                     fstype: u32::try_from(statfs.filesystem_type().0).unwrap_or(0),
                     reserved: 0,
-                    namelen: statfs.maximum_name_length(),
-                    bsize: statfs.block_size(),
+                    namelen: statfs.maximum_name_length() as i64,
+                    bsize: statfs.block_size() as i64,
                     blocks: statfs.blocks(),
                     bfree: statfs.blocks_free(),
                     bavail: statfs.blocks_available(),
@@ -302,13 +302,13 @@ impl Rpmsgfs {
             rdev: stat_result.st_rdev as u32,
             ino: stat_result.st_ino as u16,
             nlink: stat_result.st_nlink as u16,
-            size: stat_result.st_size,
-            atim_sec: stat_result.st_atime,
-            atim_nsec: stat_result.st_atime_nsec,
-            mtim_sec: stat_result.st_mtime,
-            mtim_nsec: stat_result.st_mtime_nsec,
-            ctim_sec: stat_result.st_ctime,
-            ctim_nsec: stat_result.st_ctime_nsec,
+            size: stat_result.st_size as i64,
+            atim_sec: stat_result.st_atime as i64,
+            atim_nsec: stat_result.st_atime_nsec as i64,
+            mtim_sec: stat_result.st_mtime as i64,
+            mtim_nsec: stat_result.st_mtime_nsec as i64,
+            ctim_sec: stat_result.st_ctime as i64,
+            ctim_nsec: stat_result.st_ctime_nsec as i64,
             blocks: stat_result.st_blocks as u64,
             uid: stat_result.st_uid as i16,
             gid: stat_result.st_gid as i16,
@@ -346,10 +346,14 @@ impl Rpmsgfs {
             nix::sys::stat::FchmodatFlags::FollowSymlink,
         )?;
 
-        let atime =
-            nix::sys::time::TimeSpec::new(chstat_data.stat.atim_sec, chstat_data.stat.atim_nsec);
-        let mtime =
-            nix::sys::time::TimeSpec::new(chstat_data.stat.mtim_sec, chstat_data.stat.mtim_nsec);
+        let atime = nix::sys::time::TimeSpec::new(
+            chstat_data.stat.atim_sec as nix::sys::time::time_t,
+            chstat_data.stat.atim_nsec as nix::sys::time::time_t,
+        );
+        let mtime = nix::sys::time::TimeSpec::new(
+            chstat_data.stat.mtim_sec as nix::sys::time::time_t,
+            chstat_data.stat.mtim_nsec as nix::sys::time::time_t,
+        );
         nix::sys::stat::utimensat(
             nix::fcntl::AT_FDCWD,
             path,
